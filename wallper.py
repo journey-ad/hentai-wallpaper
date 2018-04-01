@@ -5,11 +5,15 @@ import os
 import re
 import sys
 import time
+import json
 import codecs
+import requests
 import subprocess
 import configparser
 from PIL import Image
 from datetime import datetime
+
+API = "https://api.imjad.cn/pixiv/v1/"
 
 conf = {
     "sukusui": "sukusui.jpg",
@@ -22,7 +26,7 @@ def blend_image(image_a, image_b, alpha, path):
     foreground = Image.open(image_b)
 
     output = Image.blend(background, foreground, alpha)
-    print("Blend over, save to file %s" % path)
+    print("Blend over, Save as %s" % path)
     output.save(path, "PNG")
 
 
@@ -40,6 +44,55 @@ def get_alpha(start_time=19, end_time=7):
         alpha = 0
 
     return alpha
+
+
+def get_img_url(illust_id):
+    try:
+        params = {
+            "type": "illust",
+            "id": illust_id
+        }
+        headers = {
+            "User-Agent": "hentai-wallpaper"
+        }
+        r = requests.get(API, headers=headers, params=params, timeout=20)
+        resp = json.loads(r.text)
+        if resp["status"] != "success":
+            print(resp["errors"]["system"]["message"])
+            return None
+
+        page_list = []
+        if not resp["response"][0]["metadata"]:
+            page_list.append(resp["response"][0]["image_urls"]["large"])
+        else:
+            pages = resp["response"][0]["metadata"]["pages"]
+            for page in pages:
+                page_list.append(page["image_urls"]["large"])
+
+        return page_list
+    except Exception as err:
+        print(illust_id)
+        raise err
+
+
+def download(illust_id, file_name, path=os.getcwd()):
+    headers = {
+        "Referer": "https://www.pixiv.net"
+    }
+    print("Get illust(%s) page list..." % (illust_id))
+    page_list = get_img_url(illust_id)
+    for url in page_list:
+        file_path = os.path.join(path, file_name)
+        print("Downloading... Save as %s" % (file_path))
+        try:
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            if os.path.exists(file_path):
+                print("Image exists.")
+            else:
+                with open(file_path, "wb") as file:
+                    file.write(requests.get(url, headers=headers, timeout=30).content)
+        except Exception as e:
+            raise e
 
 
 # https://stackoverflow.com/questions/2035657/what-is-my-current-desktop-environment/21213358#21213358
@@ -258,6 +311,10 @@ if __name__ == "__main__":
         alpha = get_alpha(19, 7)
         print("Alpha is %s" % alpha)
         path = os.path.join(os.getcwd(), "output.png")
+        if not os.path.exists(os.path.join(os.getcwd(), conf["sukusui"])):
+            download(66183927, conf["sukusui"])
+        if not os.path.exists(os.path.join(os.getcwd(), conf["zenra"])):
+            download(66184094, conf["zenra"])
         blend_image(conf["sukusui"], conf["zenra"], alpha, path)
         set_wallpaper(path, first_run)
         first_run = False
