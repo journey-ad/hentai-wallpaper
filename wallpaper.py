@@ -14,10 +14,10 @@ from PIL import Image
 from datetime import datetime
 
 API = "https://api.imjad.cn/pixiv/v1/"
-
+PATH = os.path.split(os.path.realpath(__file__))[0]
 conf = {
-    "sukusui": "sukusui.jpg",
-    "zenra": "zenra.jpg"
+    "sukusui": os.path.join(PATH, "sukusui.jpg"),
+    "zenra": os.path.join(PATH, "zenra.jpg")
 }
 
 
@@ -75,7 +75,7 @@ def get_img_url(illust_id):
         raise err
 
 
-def download(illust_id, file_name, path=os.getcwd()):
+def download(illust_id, file_name, path=PATH):
     headers = {
         "Referer": "https://www.pixiv.net"
     }
@@ -310,10 +310,10 @@ if __name__ == "__main__":
     while True:
         alpha = get_alpha(19, 7)
         print("Alpha is %s" % alpha)
-        path = os.path.join(os.getcwd(), "output.png")
-        if not os.path.exists(os.path.join(os.getcwd(), conf["sukusui"])):
+        path = os.path.join(PATH, "output.png")
+        if not os.path.exists(conf["sukusui"]):
             download(66183927, conf["sukusui"])
-        if not os.path.exists(os.path.join(os.getcwd(), conf["zenra"])):
+        if not os.path.exists(conf["zenra"]):
             download(66184094, conf["zenra"])
         blend_image(conf["sukusui"], conf["zenra"], alpha, path)
         set_wallpaper(path, first_run)
