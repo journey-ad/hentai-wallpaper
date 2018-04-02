@@ -37,11 +37,11 @@ def get_alpha(start_time=19, end_time=7):
     hours = seconds / 3600
 
     if hours > start_time:
-        alpha = (hours - start_time) / 5
+        alpha = 1 - (hours - start_time) / 5
     elif hours < end_time:
-        alpha = 1
-    else:
         alpha = 0
+    else:
+        alpha = 1
 
     return alpha
 
@@ -314,14 +314,14 @@ def get_home_dir():
 if __name__ == "__main__":
     first_run = True
     while True:
+        if not os.path.exists(conf["zenra"]):
+            download(66184094, conf["zenra"])
+        if not os.path.exists(conf["sukusui"]):
+            download(66183927, conf["sukusui"])
         alpha = get_alpha(19, 7)
         print("Alpha is %s" % alpha)
         path = os.path.join(PATH, "output.png")
-        if not os.path.exists(conf["sukusui"]):
-            download(66183927, conf["sukusui"])
-        if not os.path.exists(conf["zenra"]):
-            download(66184094, conf["zenra"])
-        blend_image(conf["sukusui"], conf["zenra"], alpha, path)
+        blend_image(conf["zenra"], conf["sukusui"], alpha, path)
         set_wallpaper(path, first_run)
         first_run = False
         time.sleep(120)
