@@ -2,7 +2,6 @@
 # __auther__ = "journey.ad"
 # __link__ = "https://github.com/journey-ad/hentai-wallpaper"
 import os
-import re
 import sys
 import time
 import json
@@ -16,8 +15,8 @@ from datetime import datetime
 API = "https://api.imjad.cn/pixiv/v1/"
 PATH = os.path.split(os.path.realpath(__file__))[0]
 conf = {
-    "sukusui": os.path.join(PATH, "sukusui.jpg"),
-    "zenra": os.path.join(PATH, "zenra.jpg")
+    "zenra": os.path.join(PATH, "zenra.jpg"),
+    "sukusui": os.path.join(PATH, "sukusui.jpg")
 }
 
 
@@ -110,7 +109,7 @@ def get_desktop_environment():
         if desktop_session is not None:  # easier to match if we doesn't have  to deal with caracter cases
             desktop_session = desktop_session.lower()
             if desktop_session in [
-                    "gnome", "unity", "cinnamon", "mate", "xfce4", "lxde", "fluxbox",
+                    "gnome", "unity", "cinnamon", "mate", "xfce4", "lxde", "fluxbox", "i3",
                     "blackbox", "openbox", "icewm", "jwm", "afterstep", "trinity", "kde"]:
                 return desktop_session
             # Special cases #
@@ -149,7 +148,7 @@ def is_running(process):
     except:  # Windows
         s = subprocess.Popen(["tasklist", "/v"], stdout=subprocess.PIPE)
     for x in s.stdout:
-        if re.search(process, x):
+        if process in str(x):
             return True
     return False
 
@@ -247,10 +246,6 @@ def set_wallpaper(file_loc, first_run):
             # From http://www.commandlinefu.com/commands/view/3857/set-wallpaper-on-windowmaker-in-one-line
             args = "wmsetbg -s -u %s" % file_loc
             subprocess.Popen(args, shell=True)
-        # NOT TESTED BELOW - don't want to mess things up ##
-        elif desktop_env == "enlightenment":  # I have not been able to make it work on e17. On e16 it would have been something in this direction
-            args = "enlightenment_remote -desktop-bg-add 0 0 0 0 %s" % file_loc
-            subprocess.Popen(args, shell=True)
         elif desktop_env == "windows":  # Not tested since I do not run this on Windows
             # From https://stackoverflow.com/questions/1977694/change-desktop-background
             import ctypes
@@ -273,6 +268,19 @@ def set_wallpaper(file_loc, first_run):
                 end tell
 END"""
                 subprocess.Popen(SCRIPT % file_loc, shell=True)
+        # NOT TESTED BELOW - don't want to mess things up ##
+        elif desktop_env == "enlightenment":  # I have not been able to make it work on e17. On e16 it would have been something in this direction
+            args = "enlightenment_remote -desktop-bg-add 0 0 0 0 %s" % file_loc
+            subprocess.Popen(args, shell=True)
+        elif desktop_env == "i3":
+            # https://faq.i3wm.org/question/6/how-can-i-set-a-desktop-background-image-in-i3/#post-id-8
+            # you need to install feh manually.
+            try:
+                args = ["feh", "--bg-scale", file_loc]
+                subprocess.Popen(args)
+            except:
+                print("ERROR: Failed to set wallpaper with feh!\n")
+                print("Please make sre that You have feh installed.\n")
         else:
             if first_run:  # don"t spam the user with the same message over and over again
                 print("Warning: Failed to set wallpaper. Your desktop environment is not supported.")
