@@ -256,18 +256,22 @@ def set_wallpaper(file_loc, first_run):
             import ctypes
             SPI_SETDESKWALLPAPER = 20
             ctypes.windll.user32.SystemParametersInfoW(SPI_SETDESKWALLPAPER, 0, file_loc, 0)
-        elif desktop_env == "mac":  # Not tested since I do not have a mac
-            # From https://stackoverflow.com/questions/431205/how-can-i-programatically-change-the-background-in-mac-os-x
+        elif desktop_env == "mac":  # work on 10.12 Beta (16A238m)
+            # From https://github.com/xyangk/EarthLiveSharp/blob/013a87e0baa07230bd19d2c51fafd64e475cdd48/mac_os_x/wallpaper.py#L105-L114
             try:
                 from appscript import app, mactypes
                 app("Finder").desktop_picture.set(mactypes.File(file_loc))
             except ImportError:
-                # import subprocess
                 SCRIPT = """/usr/bin/osascript<<END
-                tell application "Finder" to
-                set desktop picture to POSIX file "%s"
+                tell application "System Events"
+                    set desktopCount to count of desktops
+                    repeat with desktopNumber from 1 to desktopCount
+                        tell desktop desktopNumber
+                            set picture to "%s"
+                        end tell
+                    end repeat
                 end tell
-                END"""
+END"""
                 subprocess.Popen(SCRIPT % file_loc, shell=True)
         else:
             if first_run:  # don"t spam the user with the same message over and over again
